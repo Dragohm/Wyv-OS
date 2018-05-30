@@ -46,9 +46,11 @@
 #include "up_arch.h"
 
 #include "chip/imxrt_iomuxc.h"
+#include "chip/imxrt_pinmux.h"
 #include "chip/imxrt_ccm.h"
 #include "chip/imxrt_lpuart.h"
 #include "imxrt_config.h"
+#include "imxrt_periphclks.h"
 #include "imxrt_iomuxc.h"
 #include "imxrt_gpio.h"
 #include "imxrt_lowputc.h"
@@ -121,9 +123,8 @@
  * of the TxFIFO, read clock of the RxFIFO and synchronization of the modem
  * control input pins. It must always be running when UART is enabled.
  *
- * The default ipg_clk is 66MHz (max 66.5MHz).  ipg_clk is gated by
- * CCGR5[CG12], uart_clk_enable.  ipg_clk is shared among many modules and
- * should not be controlled by the UART logic.
+ * The default lpuart1 ipg_clk is 66MHz (max 66.5MHz).  ipg_clk is shared
+ * among many modules and should not be controlled by the UART logic.
  *
  * The module_clock is for all the state machines, writing RxFIFO, reading
  * TxFIFO, etc.  It must always be running when UART is sending or receiving
@@ -131,11 +132,11 @@
  * peripheral_clock without changing configuration of baud rate.
  *
  * The default ipg_perclk is 80MHz (max 80MHz).  ipg_perclk is gated by
- * CCGR5[CG13], uart_serial_clk_enable.  The clock generation sequence is:
+ * CCGR5[CG12], lpuart1_clk_enable.  The clock generation sequence is:
  *
- *   pll3_sw_clk (480M) -> CCGR5[CG13] -> 3 bit divider cg podf=6 ->
- *     PLL3_80M (80Mhz) -> CDCDR1: uart_clk_podf ->
- *       6 bit divider default=1 -> UART_CLK_ROOT
+ *   pll3_sw_clk (480M) -> CCGR5[CG12] -> 3 bit divider cg podf=6 ->
+ *     PLL3_80M (80Mhz) -> CDCDR1: lpuart1_clk_podf ->
+ *       6 bit divider default=1 -> LPUART1_CLK_ROOT
  *
  * REVISIT:  This logic assumes that all dividers are at the default value
  * and that the value of the ipg_perclk is 80MHz.
@@ -168,63 +169,37 @@ static const struct uart_config_s g_console_config =
 
 void imxrt_lpuart_clock_enable (uint32_t base)
 {
-    uint32_t regval;
-
   if (base == IMXRT_LPUART1_BASE)
     {
-      regval  = getreg32(IMXRT_CCM_CCGR5);
-      regval &= ~ CCM_CCGRX_CG12_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG12_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR5);
+      imxrt_clockall_lpuart1();
     }
   else if (base == IMXRT_LPUART2_BASE)
     {
-      regval  = getreg32(IMXRT_CCM_CCGR0);
-      regval &= ~ CCM_CCGRX_CG14_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG14_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR0);
+      imxrt_clockall_lpuart2();
     }
   else if (base == IMXRT_LPUART3_BASE)
     {
-      regval  = getreg32(IMXRT_CCM_CCGR0);
-      regval &= ~ CCM_CCGRX_CG6_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG6_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR0);
+      imxrt_clockall_lpuart3();
     }
   else if (base == IMXRT_LPUART4_BASE)
     {
-      regval  = getreg32(IMXRT_CCM_CCGR1);
-      regval &= ~ CCM_CCGRX_CG12_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG12_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR1);
+      imxrt_clockall_lpuart4();
     }
   else if (base == IMXRT_LPUART5_BASE)
     {
-      regval = getreg32(IMXRT_CCM_CCGR3);
-      regval &= ~ CCM_CCGRX_CG1_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG1_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR3);
+      imxrt_clockall_lpuart5();
     }
   else if (base == IMXRT_LPUART6_BASE)
     {
-      regval  = getreg32(IMXRT_CCM_CCGR3);
-      regval &= ~ CCM_CCGRX_CG4_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG4_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR3);
+      imxrt_clockall_lpuart6();
     }
   else if (base == IMXRT_LPUART7_BASE)
     {
-      regval = getreg32(IMXRT_CCM_CCGR5);
-      regval &= ~ CCM_CCGRX_CG13_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG13_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR5);
+      imxrt_clockall_lpuart7();
     }
   else if (base == IMXRT_LPUART8_BASE)
     {
-      regval  = getreg32(IMXRT_CCM_CCGR6);
-      regval &= ~ CCM_CCGRX_CG7_MASK;
-      regval |= (CCM_CG_ALL << CCM_CCGRX_CG7_SHIFT);
-      putreg32(regval, IMXRT_CCM_CCGR6);
+      imxrt_clockall_lpuart8();
     }
 }
 
@@ -254,8 +229,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART1_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART1_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART1_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART1_TX);
 #ifdef CONFIG_LPUART1_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART1_CTS);
 #endif
@@ -270,8 +245,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART2_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART2_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART2_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART2_TX);
 #ifdef CONFIG_LPUART2_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART2_CTS);
 #endif
@@ -286,8 +261,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART3_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART3_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART3_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART3_TX);
 #ifdef CONFIG_LPUART3_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART3_CTS);
 #endif
@@ -302,8 +277,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART4_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART4_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART4_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART4_TX);
 #ifdef CONFIG_LPUART4_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART4_CTS);
 #endif
@@ -318,8 +293,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART5_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART5_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART5_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART5_TX);
 #ifdef CONFIG_LPUART5_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART5_CTS);
 #endif
@@ -334,8 +309,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART6_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART6_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART6_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART6_TX);
 #ifdef CONFIG_LPUART6_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART6_CTS);
 #endif
@@ -350,8 +325,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART7_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART7_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART7_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART7_TX);
 #ifdef CONFIG_LPUART7_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART7_CTS);
 #endif
@@ -366,8 +341,8 @@ void imxrt_lowsetup(void)
    * control is enabled.
    */
 
-  (void)imxrt_config_gpio(GPIO_LPUART8_RX_DATA);
-  (void)imxrt_config_gpio(GPIO_LPUART8_TX_DATA);
+  (void)imxrt_config_gpio(GPIO_LPUART8_RX);
+  (void)imxrt_config_gpio(GPIO_LPUART8_TX);
 #ifdef CONFIG_LPUART8_OFLOWCONTROL
   (void)imxrt_config_gpio(GPIO_LPUART8_CTS);
 #endif

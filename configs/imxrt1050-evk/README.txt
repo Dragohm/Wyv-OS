@@ -44,10 +44,15 @@ Contents
 Serial Console
 ==============
 
-  To be provided.
+  Virtual console port provided by OpenSDA:
 
-  GPIO_AD_B0_12 LPUART1_TX UART Console
-  GPIO_AD_B0_13 LPUART1_RX UART Console
+           UART1_TXD   GPIO_AD_B0_12  LPUART1_TX
+           UART1_RXD   GPIO_AD_B0_13  LPUART1_RX
+
+  Arduino RS-232 Shield:
+
+    J22 D0 UART_RX/D0  GPIO_AD_B1_07  LPUART3_RX
+    J22 D1 UART_TX/D1  GPIO_AD_B1_06  LPUART3_TX
 
 LEDs and buttons
 ================
@@ -161,8 +166,54 @@ Configurations
 Configuration sub-directories
 -----------------------------
 
+  netnsh:
+
+    This configuration is similar to the nsh configuration except that is
+    has networking enabled, both IPv4 and IPv6.  This NSH configuration is
+    focused on network-related testing.
+
+    NOTES:
+
+    1. LED support is disabled because there is a conflict between the LED
+       GPIO and PHY pin usage.
+
+    2. Telnet is enabled.  But since both IPv4 and IPv6 are enabled, it
+       will default to IPv6.  That means that to connect a Telnet session
+       from a PC, you will need to use the IPv6 address which by defaault
+       is:
+
+         telnet fc00::2
+
+       Or, disable IPv4 support so that only IPv4 addressing is used.
+
+    3. The network monitor is not enabled in this configuration.  As a
+       result, the Ethernet cable must be connected when the board is
+       powered up.  Otherwise, it will stall for a long period of time
+       before the NSH prompt appears and you will not be able to used
+       the board.
+
+       The following configuration options should be added to your
+       configuration in order to use the network monitor:
+
+         CONFIG_IMXRT_ENET_PHYINIT=y
+         CONFIG_IMXRT_GPIO1_0_15_IRQ=y
+         CONFIG_IMXRT_GPIO_IRQ=y
+         CONFIG_NETDEV_IOCTL=y
+         CONFIG_NETDEV_PHY_IOCTL=y
+         CONFIG_NSH_NETINIT_MONITOR=y
+         CONFIG_NSH_NETINIT_RETRYMSEC=2000
+         CONFIG_NSH_NETINIT_SIGNO=18
+         CONFIG_NSH_NETINIT_THREAD=y
+         CONFIG_NSH_NETINIT_THREAD_PRIORITY=80
+         CONFIG_NSH_NETINIT_THREAD_STACKSIZE=1568
+
+       STATUS: As of this writing, I get a hardfault when I enable the PHY
+       interrupt so I suspect that there is something incorrect in that
+       pin configuration.
+
   nsh:
 
     Configures the NuttShell (nsh) located at examples/nsh.  This NSH
     configuration is focused on low level, command-line driver testing.
-    It has no network.
+    Built-in applications are supported, but none are enabled.  This
+    configuration does not support a network.

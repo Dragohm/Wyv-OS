@@ -49,6 +49,12 @@ config ARCH_FAMILY_MIMXRT1052CVL5A
 config ARCH_FAMILY_IMXRT105x
 	bool
 	default n
+	select ARCH_HAVE_FPU
+	select ARCH_HAVE_DPFPU # REVISIT
+	select ARMV7M_HAVE_ICACHE
+	select ARMV7M_HAVE_DCACHE
+	select ARMV7M_HAVE_ITCM
+	select ARMV7M_HAVE_DTCM
 
 # Peripheral support
 
@@ -57,6 +63,18 @@ config IMXRT_HAVE_LPUART
 	default n
 
 menu "i.MX RT Peripheral Selection"
+
+config IMXRT_EDMA
+	bool "eDMA"
+	default n
+	select ARCH_DMA
+
+config IMXRT_ENET
+	bool "Ethernet"
+	default n
+	select ARCH_HAVE_PHY
+	select ARCH_PHY_INTERRUPT
+	select ARCH_HAVE_NETDEV_STATISTICS
 
 menu "FlexIO Peripherals"
 
@@ -167,6 +185,38 @@ config IMXRT_GPIO5_16_31_IRQ
 	default n
 
 endif # IMXRT_GPIO_IRQ
+
+menu "Ethernet Configuration"
+	depends on IMXRT_ENET
+
+config MXRT_ENET_NRXBUFFERS
+	int "Number Rx buffers"
+	default 6
+
+config IMXRT_ENET_NTXBUFFERS
+	int "Number Tx buffers"
+	default 2
+
+config IMXRT_ENET_ENHANCEDBD
+	bool # not optional
+	default n
+
+config IMXRT_ENET_NETHIFS
+	int  # Not optional
+	default 1
+
+config IMXRT_ENET_PHYINIT
+	bool "Board-specific PHY Initialization"
+	default n
+	---help---
+		Some boards require specialized initialization of the PHY before it
+		can be used.  This may include such things as configuring GPIOs,
+		resetting the PHY, etc.  If CONFIG_IMXRT_ENET_PHYINIT is defined in
+		the configuration then the board specific logic must provide
+		imxrt_phy_boardinitialize();  The i.MXRT ENET driver will call this
+		function one time before it first uses the PHY.
+
+endmenu # IMXRT_ENET
 
 menu "Memory Configuration"
 
@@ -321,4 +371,85 @@ config IMXRT_SRAM_HEAPOFFSET
 
 endmenu  # i.MX6 Primary RAM
 endmenu # Memory Configuration
+
+menu "eDMA Configuration"
+	depends on IMXRT_EDMA
+
+config IMXRT_EDMA_NTCD
+	int "Number of transfer descriptors"
+	default 0
+	---help---
+		Number of pre-allocated transfer descriptors.  Needed for scatter-
+		gather DMA.  Make to be set to zero to disable in-memory TCDs in
+		which case only the TCD channel registers will be used and scatter-
+		will not be supported.
+
+config IMXRT_EDMA_ELINK
+	bool "Channeling Linking"
+	default n
+	---help---
+		This option enables optional minor or major loop channel linking:
+
+		Minor loop channel linking:  As the channel completes the minor
+		loop, this flag enables linking to another channel. The link target
+		channel initiates a channel service request via an internal
+		mechanism that sets the TCDn_CSR[START] bit of the specified
+		channel.
+
+		If minor loop channel linking is disabled, this link mechanism is
+		suppressed in favor of the major loop channel linking.
+
+		Major loop channel linking:  As the channel completes the minor
+		loop, this option enables the linking to another channel. The link
+		target channel initiates a channel service request via an internal
+		mechanism that sets the TCDn_CSR[START] bit of the linked channel.
+
+config IMXRT_EDMA_ERCA
+	bool "Round Robin Channel Arbitration"
+	default n
+	---help---
+		Normally, a fixed priority arbitration is used for channel
+		selection.  If this option is selected, round robin arbitration is
+		used for channel selection.
+
+config IMXRT_EDMA_HOE
+	bool "Halt On Error"
+	default y
+	---help---
+		Any error causes the HALT bit to set. Subsequently, all service
+		requests are ignored until the HALT bit is cleared.
+
+config IMXRT_EDMA_CLM
+	bool "Continuous Link Mode"
+	default n
+	---help---
+		By default, A minor loop channel link made to itself goes through
+		channel arbitration before being activated again.  If this option is
+		selected, a minor loop channel link made to itself does not go
+		through channel arbitration before being activated again. Upon minor
+		loop completion, the channel activates again if that channel has a
+		minor loop channel link enabled and the link channel is itself. This
+		effectively applies the minor loop offsets and restarts the next
+		minor loop.
+
+config IMXRT_EDMA_EMLIM
+	bool "Minor Loop Mapping"
+	default n
+	---help---
+		Normally TCD word 2 is a 32-bit NBYTES field.  When this option is
+		enabled, TCD word 2 is redefined to include individual enable fields,
+		an offset field, and the NBYTES field.  The individual enable fields
+		allow the minor loop offset to be applied to the source address, the
+		destination address, or both. The NBYTES field is reduced when either
+		offset is enabled.
+
+config IMXRT_EDMA_EDBG
+	bool "Enable Debug"
+	default n
+	---help---
+		When in debug mode, the DMA stalls the start of a new channel. Executing
+		channels are allowed to complete. Channel execution resumes when the
+		system exits debug mode or the EDBG bit is cleared
+
+endmenu # eDMA Global Configuration
 endif # ARCH_CHIP_IMXRT

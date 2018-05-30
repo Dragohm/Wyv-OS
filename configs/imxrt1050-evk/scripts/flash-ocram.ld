@@ -38,14 +38,14 @@
 MEMORY
 {
 	flash (rx)  : ORIGIN = 0x60000000, LENGTH = 0x04000000
-	sram  (rwx) : ORIGIN = 0x20200000, LENGTH = 0x00040000
+	sram  (rwx) : ORIGIN = 0x20200000, LENGTH = 0x00080000
 	itcm  (rwx) : ORIGIN = 0x00000000, LENGTH = 0x00020000
 	dtcm  (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00020000
 }
 
 OUTPUT_ARCH(arm)
 EXTERN(_vectors)
-EXTERN(hyperflash_config)
+EXTERN(flash_config)
 EXTERN(image_vector_table)
 EXTERN(boot_data)
 

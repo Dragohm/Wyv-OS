@@ -1711,8 +1711,6 @@ nuttx/
  |   |   `- README.txt
  |   |- imxrt1050-evk
  |   |   `- README.txt
- |   |- indium-f7
- |   |   `- README.txt
  |   |- kwikstik-k40/
  |   |   `- README.txt
  |   |- launchxl-tms57004/
@@ -1977,17 +1975,17 @@ nuttx/
  |       `- README.txt
  |- graphics/
  |   `- README.txt
- |- lib/
- |   `- README.txt
- |- libc/
- |   |- zoneinfo
+ |- libs/
+ |   |- README.txt
+ |   |- libc/
+ |   |   |- zoneinfo
+ |   |   |   `- README.txt
  |   |   `- README.txt
- |   `- README.txt
- |- libnx/
- |   |- nxfongs
+ |   |- libnx/
+ |   |   |- nxfongs
+ |   |   |   `- README.txt
  |   |   `- README.txt
- |   `- README.txt
- |- libxx/
+ |   |- libxx/
  |   `- README.txt
  |- mm/
  |   |- shm/

@@ -230,7 +230,6 @@
 #define IMXRT_PADMUX_OFFSET(n)                      (0x0014 + ((unsigned int)(n) << 2))
 #define IMXRT_PADMUX_OFFSET_SNVS(n)                 ((unsigned int)(n) << 2)
 
-
 #define IMXRT_PADMUX_GPIO_EMC_00_OFFSET             0x0014
 #define IMXRT_PADMUX_GPIO_EMC_01_OFFSET             0x0018
 #define IMXRT_PADMUX_GPIO_EMC_02_OFFSET             0x001c
@@ -1360,7 +1359,8 @@
 #  define PADMUX_MUXMODE_ALT4                 (4 << PADMUX_MUXMODE_SHIFT)
 #  define PADMUX_MUXMODE_ALT5                 (5 << PADMUX_MUXMODE_SHIFT)
 #  define PADMUX_MUXMODE_ALT7                 (7 << PADMUX_MUXMODE_SHIFT)
-#define PADMUX_SION                           (1 << 4)  /* Bit 4: Software Input On Field */
+#define PADMUX_SION_SHIFT                     (4)       /* Bit 4: Software Input On Field */
+#  define PADMUX_SION                         (1 << PADMUX_SION_SHIFT)
 
 /* Pad Control Registers */
 

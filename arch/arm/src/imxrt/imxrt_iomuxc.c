@@ -49,6 +49,7 @@
 
 #include "up_arch.h"
 #include "chip/imxrt_ccm.h"
+#include "imxrt_periphclks.h"
 #include "imxrt_iomuxc.h"
 
 /****************************************************************************
@@ -213,7 +214,7 @@ static const uint8_t g_mux2ctl_map[IMXRT_PADMUX_NREGISTERS] =
 
 unsigned int imxrt_padmux_map(unsigned int padmux)
 {
-  DEBUGASSERT(padmux < IMX_PADMUX_NREGISTERS);
+  DEBUGASSERT(padmux < IMXRT_PADMUX_NREGISTERS);
   return (unsigned int)g_mux2ctl_map[padmux];
 }
 
@@ -231,19 +232,22 @@ int imxrt_iomux_configure(uintptr_t padctl, iomux_pinset_t ioset)
   uint32_t regval = 0;
   uint32_t value;
 
-  /* Enable IOMUXC clock if it is not enabled*/
+  /* Enable IOMUXC clock if it is not already enabled */
 
-  regval = getreg32(IMXRT_CCM_CCGR2);
-  if ((regval & CCM_CCGRX_CG2_MASK) == 0)
-    {
-      putreg32(CCM_CG_ALL << CCM_CCGRX_CG2_SHIFT, IMXRT_CCM_CCGR2);
-    }
+  imxrt_clockall_iomuxc();
+  imxrt_clockall_iomuxc_gpr();
+
+#if 0 /* Are low-power domain, Secure Non-volatile Storage (SNVS) IOMUXC clocks needed? */
+  imxrt_clockall_iomuxc_snvs();
+  imxrt_clockall_iomuxc_snvs_gpr();
+#endif
 
   /* Select CMOS input or Schmitt Trigger input */
 
+  regval = 0;
   if ((ioset & IOMUX_SCHMITT_TRIGGER) != 0)
     {
-      regval |= PADCTL_SRE;
+      regval |= PADCTL_HYS;
     }
 
   /* Select drive strength */
@@ -291,7 +295,7 @@ int imxrt_iomux_configure(uintptr_t padctl, iomux_pinset_t ioset)
 
   if ((ioset & IOMUX_SLEW_FAST) != 0)
     {
-      regval |= PADCTL_HYS;
+      regval |= PADCTL_SRE;
     }
 
   /* Write the result to the specified Pad Control register */
