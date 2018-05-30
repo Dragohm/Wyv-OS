@@ -48,6 +48,10 @@
 #include "stm32l4_i2c.h"
 #include "nucleo-l452re.h"
 
+#ifdef CONFIG_BUTTONS
+#  include <nuttx/input/buttons.h>
+#endif
+
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
@@ -109,6 +113,16 @@ int stm32_bringup(void)
         {
           i2cerr("ERROR: Failed to register I2C1 device: %d\n", ret);
         }
+    }
+#endif
+
+#ifdef CONFIG_BUTTONS
+  /* Register the BUTTON driver */
+
+  ret = btn_lower_initialize("/dev/buttons");
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: btn_lower_initialize() failed: %d\n", ret);
     }
 #endif
 

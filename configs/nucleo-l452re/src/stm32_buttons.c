@@ -50,7 +50,28 @@
 #include "stm32l4_gpio.h"
 #include "nucleo-l452re.h"
 
+/****************************************************************************
+ * Pre-processor Definitions
+ ****************************************************************************/
+
 #ifdef CONFIG_ARCH_BUTTONS
+
+#if defined(CONFIG_BUTTONS) && !defined(CONFIG_ARCH_IRQBUTTONS)
+#  error "The NuttX Buttons Driver depends on IRQ support to work!\n"
+#endif
+
+/****************************************************************************
+ * Private Functions
+ ****************************************************************************/
+
+/* Pin configuration for each STM32L4 button.  This array is indexed
+ * by the BUTTON_* definitions in board.h
+ */
+
+static const uint32_t g_buttons[NUM_BUTTONS] =
+{
+  GPIO_BTN_USER
+};
 
 /****************************************************************************
  * Public Functions

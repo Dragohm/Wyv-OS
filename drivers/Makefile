@@ -50,6 +50,7 @@ VPATH = .
 # the appropriate paths to the VPATH variable
 
 include analog$(DELIM)Make.defs
+include at86rf215$(DELIM)Make.defs
 include audio$(DELIM)Make.defs
 include bch$(DELIM)Make.defs
 include can$(DELIM)Make.defs

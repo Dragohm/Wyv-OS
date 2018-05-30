@@ -45,7 +45,7 @@
 # include <stdint.h>
 #endif
 
-#include <stm32l4.h>
+//#include <stm32l4.h>
 
 /************************************************************************************
  * Pre-processor Definitions
